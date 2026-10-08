@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/
+.cache/
+coverage/
+test-results/
+playwright-report/
+vendor/siwc-local/dist/
+*.tsbuildinfo

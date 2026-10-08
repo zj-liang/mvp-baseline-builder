@@ -1,0 +1,5 @@
+packages:
+  - vendor/siwc-local
+  - vendor/siwc-react
+allowBuilds:
+  esbuild: true

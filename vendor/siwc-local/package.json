@@ -1,0 +1,7 @@
+{
+  "name": "@siwc/local", "version": "0.1.0", "private": true, "type": "module",
+  "description": "Vendored DevKit f723814a; locally modified manifest exposes TypeScript sources. Original noncommercial license applies.",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "jose": "^6.1.0", "proper-lockfile": "^4.1.2" },
+  "license": "SEE LICENSE IN LICENSE"
+}

@@ -1,0 +1,104 @@
+import { test, expect } from '@playwright/test';
+import type { Project } from '../../shared/domain.js';
+
+const premise = '我想做一个自律监督工具，有玩偶随机巡查，离席会扣心。';
+const premiseLabel = '描述你想象中的产品 · Product Concept / Experience Premise';
+async function read(page: import('@playwright/test').Page): Promise<Project> {
+  return page.evaluate(async () => { const id = localStorage.getItem('active-project'); return (await fetch('/api/projects/' + id)).json(); });
+}
+async function chooseA(page: import('@playwright/test').Page) {
+  await page.getByRole('radio', { name: 'A · 方案一', exact: false }).check();
+  await page.getByRole('button', { name: '查看所选决定' }).click();
+  await page.getByRole('button', { name: '确认所选决定', exact: true }).click();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  await page.locator('main[aria-busy="false"]').waitFor();
+}
+
+test('v2 vague premise, decisions, folded definitions, full preview and preserved memory', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/');
+  await expect(page.getByLabel('思考强度', { exact: true })).toHaveValue('high');
+  await expect(page.getByLabel('Product Description · 一句话说明产品是什么')).toHaveCount(0);
+  await page.getByLabel(premiseLabel).fill(premise);
+  await page.getByRole('button', { name: '保存设想并开始' }).click();
+  await expect(page.getByRole('heading', { name: '产品设想', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '玩偶是什么样的' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '确认前需要澄清的设想', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '需要你决定的事情', exact: true })).toHaveCount(0);
+  const before = await read(page);
+  expect(before.stage).toBe('concept'); expect(before.baseline).toBeNull(); expect(before.draft.candidates).toEqual([]);
+  expect(before.intake!.conceptInput).toBe(premise);
+  await expect(page.getByRole('button', { name: '确认这些设定与初始功能' })).toBeDisabled();
+  await expect(page.getByRole('radio').filter({ has: page.locator(':checked') })).toHaveCount(0);
+  const a = page.getByRole('radio', { name: 'A · 方案一', exact: false });
+  await a.focus(); await a.press('ArrowRight');
+  await expect(page.getByRole('radio', { name: 'B · 方案二', exact: false })).toBeChecked();
+  expect((await read(page)).revision).toBe(before.revision);
+  await page.getByRole('radio', { name: 'C · 暂不确定', exact: false }).check();
+  await page.reload();
+  await expect(page.getByRole('radio', { name: 'C · 暂不确定', exact: false })).toBeChecked();
+  await page.getByRole('button', { name: '查看所选决定' }).click();
+  await page.getByRole('button', { name: '确认所选决定', exact: true }).click();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  await expect(page.getByRole('button', { name: '确认这些设定与初始功能' })).toBeDisabled();
+  await chooseA(page);
+  await expect(page.getByRole('button', { name: '确认这些设定与初始功能' })).toBeEnabled();
+  await page.reload();
+  await expect(page.getByText('屏幕中的虚拟玩偶通过摄像头随机巡查，在监督中离席会扣心。', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '确认这些设定与初始功能' }).click();
+  await expect(page.getByRole('heading', { name: 'MVP 梳理', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '确认前需要澄清的设想', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '需要你决定的事情', exact: true })).toBeVisible();
+  const candidate = await read(page);
+  expect(candidate.draft.candidates.map(c => c.id)).toEqual(['P0-1', 'P0-2']);
+  await expect(page.getByLabel('希望实现什么 · Description')).toHaveCount(0);
+  await expect(page.getByText('用户意图', { exact: true }).first()).not.toBeVisible();
+  await page.getByText('查看完整定义', { exact: true }).first().click();
+  await expect(page.getByText('用户意图', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: '手动编辑', exact: true }).first().click();
+  await page.getByLabel('用户为什么想要它 · Purpose').fill('我希望有陪伴式的在场监督。');
+  await page.getByRole('button', { name: '保存草稿', exact: true }).click();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  expect((await read(page)).review).toBeNull();
+  await expect(page.getByRole('button', { name: '进入最终确认' })).toBeDisabled();
+  await page.getByRole('button', { name: 'AI 整理产品草案' }).click();
+  await expect(page.getByRole('heading', { name: 'MVP 梳理', exact: true })).toBeVisible();
+  await page.getByRole('radio', { name: 'D · 自定义', exact: false }).check();
+  await page.getByLabel('你希望玩偶多久巡查、离席怎样扣心？', { exact: true }).fill('每10至30秒随机巡查；监督开始为3颗心；离席超过10秒扣1心，同次只扣一次；回到画面重新计时，0心结束。');
+  await page.getByRole('button', { name: '查看所选决定' }).click();
+  await page.getByRole('button', { name: '确认所选决定', exact: true }).click();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  await expect(page.getByRole('heading', { name: 'MVP 梳理', exact: true })).toBeVisible();
+  await expect(page.locator('.verification-brief').filter({ hasText: '程序检查 + 人工实测' })).toBeVisible();
+  await expect(page.getByLabel('Agent 验证步骤').first()).not.toBeVisible();
+  await page.getByRole('button', { name: '进入最终确认' }).click();
+  await expect(page.getByRole('heading', { name: '最终确认', exact: true })).toBeVisible();
+  await expect(page.getByText('屏幕中的虚拟玩偶通过摄像头随机巡查，在监督中离席会扣心。', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '确认并生成 Baseline v1' })).toBeDisabled();
+  await page.getByRole('checkbox').check(); await page.getByRole('button', { name: '确认并生成 Baseline v1' }).click();
+  await expect(page.getByRole('heading', { name: '产品基线', exact: true })).toBeVisible();
+  const committed = await read(page); expect(committed.baseline!.p0Items).toHaveLength(2);
+  expect(committed.baseline!.productConcept).toContain('虚拟玩偶');
+  await page.reload(); await expect(page.getByRole('heading', { name: '产品基线', exact: true })).toBeVisible();
+  const safe = await page.evaluate(async () => ({ auth: await (await fetch('/api/auth')).json(), storage: { ...localStorage }, cookies: document.cookie }));
+  expect(JSON.stringify(safe)).not.toMatch(/accessToken|refreshToken|id_token|credentials|baseline_session/);
+  await page.getByRole('button', { name: '新建项目' }).click();
+  await page.getByLabel(premiseLabel).fill(premise); await page.getByRole('button', { name: '保存设想并开始' }).click();
+  await expect(page.getByRole('heading', { name: '产品设想', exact: true })).toBeVisible();
+  await page.locator('main[aria-busy="false"]').waitFor();
+  await page.getByLabel('选择本地项目').selectOption(committed.id);
+  await expect(page.getByRole('heading', { name: '产品基线', exact: true })).toBeVisible();
+  expect((await read(page)).baseline).toEqual(committed.baseline); expect(errors).toEqual([]);
+});
+
+test('mobile decisions fit the viewport and never preselect answers', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/'); await page.getByLabel(premiseLabel).fill(premise);
+  await page.getByRole('button', { name: '保存设想并开始' }).click();
+  await expect(page.getByRole('heading', { name: '玩偶是什么样的' })).toBeVisible();
+  expect(await page.locator('input[type=radio]:checked').count()).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('radio', { name: 'D · 自定义', exact: false }).check();
+  await expect(page.getByLabel('你设想的玩偶如何巡查？', { exact: true })).toBeVisible();
+});

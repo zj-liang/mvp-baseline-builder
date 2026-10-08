@@ -1,0 +1,21 @@
+import { Store } from '../../server/store.js';
+import { buildApp } from '../../server/app.js';
+import { fixtureAuth, fixtureProvider } from '../fixtures.js';
+import { AIConnections } from '../../server/ai-connections.js';
+import { windowsCredentialEncryption } from '../../server/auth.js';
+import { openAIModel, glmModels } from '../../server/model-capabilities.js';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+mkdirSync(resolve('.cache/tests'), { recursive: true });
+const connectionDirectory = mkdtempSync(resolve('.cache/tests/ai-e2e-'));
+const connections = new AIConnections(connectionDirectory, windowsCredentialEncryption);
+const store = new Store(process.env.E2E_DATA_PATH ?? ':memory:');
+const app = await buildApp({ store, auth: fixtureAuth, connections, provider: { ...fixtureProvider, async testConnection() { return { ok: true }; }, async catalog(_signal, id = 'chatgpt') {
+  if (id === 'glm') return { models: glmModels, defaultModel: '' };
+  if (id === 'deepseek') return { models: [{ slug: 'deepseek-flash', displayName: 'deepseek-flash', reasoning: { efforts: ['low', 'high', 'max'], defaultEffort: 'high', toggle: true } }], defaultModel: '' };
+  return { models: [openAIModel('gpt-6.1-sol', '6.1 Sol', id === 'chatgpt'), openAIModel('gpt-6-astra', 'Astra', id === 'chatgpt')], defaultModel: id === 'chatgpt' ? 'gpt-6.1-sol' : '' };
+} } });
+const address = await app.listen({ host: '127.0.0.1', port: Number(process.env.E2E_PORT ?? 3101) });
+console.log(`E2E_URL=${address}`);
+console.log('TEST ONLY: isolated fixture server (not real ChatGPT inference).');
+for (const signal of ['SIGTERM', 'SIGINT'] as const) process.on(signal, () => { void app.close().then(() => { store.close(); if (dirname(connectionDirectory) === resolve('.cache/tests')) rmSync(connectionDirectory, { recursive: true, force: true }); process.exit(0); }); });

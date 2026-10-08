@@ -1,0 +1,40 @@
+{
+  "name": "mvp-baseline-builder",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.5.0" },
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "node --use-env-proxy --watch-path=server --watch-path=shared --import tsx server/main.ts --dev",
+    "build": "tsc --noEmit && vite build",
+    "start": "node --use-env-proxy --import tsx server/main.ts",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "verify:auth": "node --use-env-proxy --import tsx scripts/verify-auth.ts",
+    "verify:live-flow": "node --use-env-proxy --import tsx scripts/verify-live-flow.ts"
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2",
+    "@siwc/local": "workspace:*",
+    "@siwc/react": "workspace:*",
+    "@fastify/static": "^8.3.0",
+    "fastify": "^5.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.7.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9",
+    "vitest": "^3.2.4",
+    "@types/proper-lockfile": "^4.1.4"
+  }
+}
