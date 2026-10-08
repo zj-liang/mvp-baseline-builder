@@ -37,37 +37,70 @@
 
 ## 安装与启动
 
-当前凭据适配器面向 **Windows**。先安装带 npm 的 Node.js，版本须满足 [package.json](../package.json) 的 `engines.node`。包管理器版本读取同一文件的 `packageManager`，在项目根目录执行：
+### 第一次准备
+
+当前凭据适配器面向 **Windows**。从 [Node.js 官网](https://nodejs.org/en/download) 安装带 npm 的 24.x LTS（最低 24.5.0），保留安装程序的默认选项，安装后重新打开命令窗口。版本要求以 [package.json](../package.json) 的 `engines.node` 为准。
+
+下载源码 ZIP 并解压，进入能看到 `package.json` 的文件夹。在文件资源管理器地址栏输入 `powershell` 并按回车。先检查 Node.js：
+
+```powershell
+node --version
+```
+
+应显示符合要求的版本号，例如 `v24.21.0`。如果提示找不到 `node`，先重新打开 PowerShell，再检查 Node.js 是否已安装。
+
+在同一窗口安装依赖、构建。依赖下载需要联网；如下载受阻且当前网络需要代理，可先按下面的[代理配置](#需要代理时如何启动)设置三项变量，再执行安装命令：
 
 ```powershell
 $taskPackageManager = (Get-Content ./package.json -Raw | ConvertFrom-Json).packageManager
-npm install --global $taskPackageManager
-pnpm install --frozen-lockfile
+npm.cmd install --global $taskPackageManager
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd build
 ```
 
-开发运行：
+命令使用 `.cmd` 入口，避免 PowerShell 把同名 `.ps1` 启动器当作被禁用的脚本；无需为此更改系统执行策略。如果提示找不到 `pnpm.cmd`，重新打开项目文件夹中的 PowerShell 再试。安装和构建失败时先处理错误，不继续启动。
+
+### 每次打开与关闭
+
+第一次准备成功后，每次只需在同一项目文件夹打开 PowerShell，执行：
 
 ```powershell
-pnpm dev
+node --use-env-proxy --import tsx server/main.ts
 ```
 
-生产运行：
+出现 `MVP Baseline Builder → http://127.0.0.1:3000` 后，在浏览器打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。命令窗口需要保持打开，可以最小化；用完按 `Ctrl+C` 停止应用，再关闭窗口。关闭网页不会停止后台服务；已保存的项目会保留。没有更新源码时，无需重复安装和构建。
+
+这个 Node 命令与 `pnpm.cmd start` 调用同一入口。服务仅监听本机；使用 `127.0.0.1`，不要替换为 `localhost`，因为请求核验 Host、Origin 和 HttpOnly 会话。源码包不包含可直接使用的账号或 Key，首次使用需在 AI 连接中配置自己的连接。
+
+### 需要代理时如何启动
+
+`--use-env-proxy` 会在启动时读取 `HTTP_PROXY`、`HTTPS_PROXY`、`NO_PROXY`；没有这些变量时直接连接。Windows 系统代理和浏览器能联网，不代表 Node 已使用该代理。[Node.js 官方说明](https://nodejs.org/api/cli.html#--use-env-proxy)
+
+如当前网络需要代理，先打开自己的代理软件，在设置中找到 **HTTP 或混合端口**。例如软件显示 `127.0.0.1:7890`，就在启动前、同一个 PowerShell 窗口执行：
 
 ```powershell
-pnpm build
-pnpm start
+$env:HTTP_PROXY = 'http://127.0.0.1:7890'
+$env:HTTPS_PROXY = 'http://127.0.0.1:7890'
+$env:NO_PROXY = '127.0.0.1,localhost,::1'
+node --use-env-proxy --import tsx server/main.ts
 ```
 
-浏览器打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。服务仅监听本机；使用 `127.0.0.1`，不要替换为 `localhost`，因为请求核验 Host、Origin 和 HttpOnly 会话。开发模式由 Vite 提供前端，后端修改会重新启动服务；按 `Ctrl+C` 停止。
+`7890` 只是示例，必须换成自己软件实际显示的 HTTP／混合端口，不能把仅支持 SOCKS 的端口直接填入。这里的 `http://` 描述本机代理协议；请求到模型服务仍使用 HTTPS。`NO_PROXY` 让本机应用地址直连。这些变量只作用于当前窗口；新开窗口需要重新设置。已启动应用需先按 `Ctrl+C` 停止，再带配置启动。
+
+`api_error` 是通用 API 错误，不能只凭这一项判定为代理问题；检查网络后还需看 AI 连接中的账号、Plan Usage 授权、模型权限和额度。不要把 Key、Token 或完整认证文件贴到 GitHub Issue；网络问题说明见 [AUTH_AND_MODELS.md](../AUTH_AND_MODELS.md)。
+
+### 端口与开发运行
+
+提示服务未能启动时，检查首次构建是否成功、3000 端口是否已有程序运行。已有本应用正在运行时可直接使用，不必再启动一份。
 
 `PORT` 调整端口，`BASELINE_DATA_DIR` 调整数据目录，默认数据目录相对启动工作目录解析。例如：
 
 ```powershell
 $env:PORT = '3001'
-pnpm start
+node --use-env-proxy --import tsx server/main.ts
 ```
 
-启动命令使用 Node `--use-env-proxy` 读取已有受信任代理配置；未配置时直接连接。连接问题和认证保护详见 [AUTH_AND_MODELS.md](../AUTH_AND_MODELS.md)。
+更换端口后浏览器使用对应地址，如 `http://127.0.0.1:3001`。需要修改源码时，可用 `pnpm.cmd dev` 启动开发模式；由 Vite 提供前端，后端修改会重新启动服务。生产使用沿用上面的构建与启动步骤。
 
 ## AI 连接与模型设置
 
@@ -135,6 +168,8 @@ Key 提交后输入框清空，由后端使用 Windows DPAPI 加密保存在本�
 - **退出账号**：使用 **Sign out**，不要删除 `data/auth/` 代替退出，以免丢失 host 和注册映射或未完成远程撤销。
 
 本机文件不参与 ChatGPT 云同步。备份与恢复时保留完整产品数据；复制认证加密文件到另一用户或机器不能直接复用连接。
+
+分享源码时使用仓库提供的源码 ZIP 或干净克隆，不直接打包正在使用的项目文件夹。`data/` 虽被 Git 忽略，仍可能被普通压缩工具打包；它包含自己的产品资料及加密凭据，不应上传或发给别人。发问题截图前，也要检查账号邮箱、个人项目内容和终端路径。运行 AI 整理时，需求与澄清上下文会发送至自己选定的模型服务；本机存储不表示 AI 请求离线处理。
 
 ## 在独立 worktree 开发
 

@@ -1,6 +1,6 @@
 # 认证、模型与推理
 
-本文件供修改登录、凭据保护、模型设置、推理请求或排查网络时查阅。安装与日常操作见 [README.md](./README.md)，模块边界见 [ARCHITECTURE.md](./ARCHITECTURE.md)，验证方法与历史结果见 [VALIDATION.md](./VALIDATION.md)。具体默认值以链接的代码为准；某次账号的可用模型不代表其他账号或后续目录。
+本文件供修改登录、凭据保护、模型设置、推理请求或排查网络时查阅。安装与日常操作见 [使用说明](./docs/USER_GUIDE.md)，模块边界见 [ARCHITECTURE.md](./ARCHITECTURE.md)，验证方法与历史结果见 [VALIDATION.md](./VALIDATION.md)。具体默认值以链接的代码为准；某次账号的可用模型不代表其他账号或后续目录。
 
 ## 官方登录与权限
 
@@ -16,7 +16,7 @@
 
 Windows 适配器使用 DPAPI `CurrentUser` 加密认证运行时，通过 Node/PowerShell 匿名管道传递加密材料，不创建临时明文文件。加密凭据与 Windows 用户绑定，不能直接复制到另一个用户或设备解密；其他平台需要 OS secret-store 适配器，不允许明文回退。
 
-认证文件位置见 [README.md](./README.md)。保持 host ID 和注册映射，不以清空用户认证目录进行测试，不擅自退出已有连接。
+认证文件位置见 [使用说明](./docs/USER_GUIDE.md#本地数据与重置)。保持 host ID 和注册映射，不以清空用户认证目录进行测试，不擅自退出已有连接。
 
 Token、API Key、授权码、PKCE verifier 和未脱敏认证状态不能进入前端响应、localStorage、日志、命令参数、临时明文文件或 Git。Key 仅在填写与提交期间存在于浏览器内存，提交即清空输入框。后端只返回配置/验证状态，不返回 Key。
 
@@ -98,6 +98,8 @@ Responses 必须收到成功完成事件，GLM 必须正常 stop 并结束流；
 ## 网络排查
 
 启动与真实验证脚本使用 Node `--use-env-proxy`；命令定义见 [package.json](./package.json)。已配置的受信任 `HTTP_PROXY`、`HTTPS_PROXY`、`NO_PROXY` 会由 Node 使用，没有代理配置时直接连接。
+
+这些是启动进程继承的环境变量，不会因为启用了 Windows 系统代理就自动填入。需要代理时按[使用说明](./docs/USER_GUIDE.md#需要代理时如何启动)在同一 PowerShell 窗口填写自己的 HTTP／混合代理地址再启动；不把作者电脑的端口当作所有使用者的固定配置。
 
 排查时先检查已有代理配置、官方 discovery/JWKS 与推理端点的连通性，再区分连接权限、模型目录和推理错误。不要修改用户系统代理、泄露含凭据的代理地址，或用非官方端点绕过授权。用户明确选择的 API 连接使用对应 Key，不作为 ChatGPT 授权失败的自动回退。不要把网络故障解释为用户产品逻辑不完整。
 

@@ -37,26 +37,35 @@
 
 ## 本地运行
 
-需要 **Windows、Node.js 24.5.0 或更高版本**，以及使用者自己的 AI 连接。Node.js 版本要求和 pnpm 版本以 `package.json` 为准。
+需要 **Windows、Node.js 24.5.0 或更高版本**，以及使用者自己的 AI 连接。可从 [Node.js 官网](https://nodejs.org/en/download) 安装 24.x LTS；安装后重新打开 PowerShell。Node.js 版本要求和 pnpm 版本以 `package.json` 为准。
 
-下载 ZIP 并解压后，在包含 `package.json` 的文件夹打开 PowerShell。也可以克隆仓库：
+下载 ZIP 并解压，进入能看到 `package.json` 的文件夹。在文件资源管理器地址栏输入 `powershell` 并按回车，即可在这里打开命令窗口。也可以克隆仓库：
 
 ```powershell
 git clone https://github.com/zj-liang/mvp-baseline-builder.git
 cd mvp-baseline-builder
 ```
 
-安装依赖、构建并启动：
+首次使用，安装依赖并构建一次：
 
 ```powershell
 $taskPackageManager = (Get-Content ./package.json -Raw | ConvertFrom-Json).packageManager
-npm install --global $taskPackageManager
-pnpm install --frozen-lockfile
-pnpm build
-pnpm start
+npm.cmd install --global $taskPackageManager
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd build
 ```
 
+以后每次打开，在同一项目文件夹执行：
+
+```powershell
+node --use-env-proxy --import tsx server/main.ts
+```
+
+**需要代理时，先配置再启动。** 启动参数会读取 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY`，不会自动读取 Windows 系统代理地址。请按[代理配置步骤](docs/USER_GUIDE.md#需要代理时如何启动)填写自己代理软件的 HTTP／混合端口；示例端口不是应用默认值。
+
 浏览器打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。在 AI 连接中选择 ChatGPT 账号、OpenAI API、DeepSeek API 或智谱 GLM API，配置自己的账号或 Key。AI 整理需要联网；源码下载不附带账号或模型额度。
+
+使用时保持命令窗口打开，可以最小化；用完在该窗口按 `Ctrl+C` 停止。下次启动无需重新安装或构建。账号资格、网络、模型权限和额度由所选服务决定，能打开界面不等于已经完成真实 AI 连接。
 
 这是源码运行方式，还没有双击安装包。当前凭据加密依赖 Windows；服务只监听本机，不是公开托管的在线应用。
 
