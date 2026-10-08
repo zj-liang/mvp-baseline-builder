@@ -56,7 +56,7 @@ pnpm build
 pnpm start
 ```
 
-浏览器打开 **http://127.0.0.1:3000**。在 AI 连接中选择 ChatGPT 账号、OpenAI API、DeepSeek API 或智谱 GLM API，配置自己的账号或 Key。AI 整理需要联网；源码下载不附带账号或模型额度。
+浏览器打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。在 AI 连接中选择 ChatGPT 账号、OpenAI API、DeepSeek API 或智谱 GLM API，配置自己的账号或 Key。AI 整理需要联网；源码下载不附带账号或模型额度。
 
 这是源码运行方式，还没有双击安装包。当前凭据加密依赖 Windows；服务只监听本机，不是公开托管的在线应用。
 
