@@ -6,7 +6,17 @@
 
 这是一个在 Windows 本机运行的中文工具。你描述想做什么，AI 整理产品定义、找出需要决定的问题；你确认规则，再把完整的第一版产品逻辑保存下来。后续加入功能，可以在保留旧基线的情况下继续形成新版本。
 
-[看完整演示](docs/DEMO.md) · [读产品设计案例](docs/CASE_STUDY.md) · [下载源码 ZIP](https://github.com/zj-liang/mvp-baseline-builder/archive/refs/heads/main.zip) · [本地运行](#本地运行)
+[下载关键演示视频](https://github.com/zj-liang/mvp-baseline-builder/releases/download/demo-0.4.0/mvp-baseline-builder-key-demo.mp4) · [界面导览](docs/DEMO.md) · [读产品设计案例](docs/CASE_STUDY.md) · [下载源码 ZIP](https://github.com/zj-liang/mvp-baseline-builder/archive/refs/heads/main.zip) · [本地运行](#本地运行)
+
+## 关键流程演示 · 约 1 分 50 秒
+
+[![关键演示：新增需求与旧规则冲突，需要用户明确接受方案](docs/assets/demo-video-cover.png)](https://github.com/zj-liang/mvp-baseline-builder/releases/download/demo-0.4.0/mvp-baseline-builder-key-demo.mp4)
+
+点击封面下载 MP4，建议全屏观看。片段依次展示确认初始功能、集中做决定、保存 v1、新增功能归属、接受冲突解决规则，以及保存 v2 后查看旧版本。
+
+这段视频从作者提供的应用录屏中节选，省略了部分输入、等待、滚动和中间操作；展示关键节点，不代表处理速度或审查正确率。视频里的自律工具是待梳理的产品设想，本应用没有实现它。
+
+以下静态图来自另一份隔离示例，使用模拟 AI；[界面导览](docs/DEMO.md)保留了这组示例的完整说明。
 
 ![MVP 梳理：产品摘要和功能审查状态](docs/assets/02-workspace.png)
 
